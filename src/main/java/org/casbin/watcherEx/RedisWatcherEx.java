@@ -253,6 +253,9 @@ public class RedisWatcherEx implements WatcherEx {
         });
     }
 
+    /**
+     * get serialized msg
+     */
     private static String getBinaryMsg(Msg msg) throws JsonProcessingException {
         byte[] data = msg.marshalBinary();
         String dataStr = new String(data, StandardCharsets.UTF_8);

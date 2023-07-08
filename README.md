@@ -10,10 +10,6 @@ Redis WatcherEx
 
 Redis Watcher is a [Redis](http://redis.io) watcher for [Casbin](https://github.com/casbin/casbin).
 
-## Installation
-
-    go get github.com/casbin/redis-watcher/v2
-
 ## Simple Example
 
 ```java

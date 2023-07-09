@@ -127,28 +127,23 @@ public class Msg implements Serializable {
     /**
      * UnmarshalBinary decodes the struct into a User
      */
-    public void unmarshalBinary(byte[] data) throws JsonProcessingException {
+    public void unmarshalBinary(byte[] data) throws IOException {
         ObjectMapper objectMapper = new ObjectMapper();
-        Msg msg = null;
         try {
-            msg = objectMapper.readValue(data, Msg.class);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
+            Msg msg = objectMapper.readValue(data, Msg.class);
+            setId(msg.getId());
+            setSec(msg.getSec());
+            setPtype(msg.getPtype());
+            setMethod(msg.getMethod());
+            setNewRule(msg.getNewRule());
+            setFieldIndex(msg.getFieldIndex());
+            setFieldValues(msg.getFieldValues());
+            setNewRules(msg.getNewRules());
+            setOldRule(msg.getOldRule());
+            setOldRules(msg.getOldRules());
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
         }
-        initMsg(msg);
     }
-    private void initMsg(Msg msg) {
-        this.method = msg.method;
-        this.id = msg.id;
-        this.sec = msg.sec;
-        this.ptype = msg.ptype;
-        this.oldRule = msg.oldRule;
-        this.oldRules = msg.oldRules;
-        this.newRule = msg.newRule;
-        this.newRules = msg.newRules;
-        this.fieldIndex = msg.fieldIndex;
-        this.fieldValues = msg.fieldValues;
-    }
-
 
 }

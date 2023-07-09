@@ -2,6 +2,7 @@ package org.casbin.watcherEx;
 
 import redis.clients.jedis.JedisPubSub;
 
+import java.io.IOException;
 import java.util.function.Consumer;
 
 public class Subscriber extends JedisPubSub {
@@ -22,6 +23,12 @@ public class Subscriber extends JedisPubSub {
 
     public void onMessage(String channel, String message) {
         runnable.run();
+        Msg msg = new Msg();
+        try {
+            msg.unmarshalBinary(message.getBytes());
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
         if(consumer != null){
             consumer.accept("Channel: " + channel + " Message: " + message);
         }

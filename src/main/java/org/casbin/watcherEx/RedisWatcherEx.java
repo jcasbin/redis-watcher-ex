@@ -3,9 +3,11 @@ package org.casbin.watcherEx;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import org.casbin.jcasbin.model.Model;
 import org.casbin.jcasbin.persist.WatcherEx;
+import org.casbin.jcasbin.persist.WatcherUpdatable;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
 import redis.clients.jedis.JedisPoolConfig;
+import redis.clients.jedis.JedisPubSub;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
@@ -13,25 +15,24 @@ import java.util.List;
 import java.util.UUID;
 import java.util.function.Consumer;
 
-public class RedisWatcherEx implements WatcherEx {
+public class RedisWatcherEx implements WatcherEx , WatcherUpdatable {
     private Runnable updateCallback;
     private final JedisPool jedisPool;
     private final String localId;
     private final String redisChannelName;
-    private SubThread subThread;
 
     public RedisWatcherEx(String redisIp, int redisPort, String redisChannelName, int timeout, String password) {
         this.jedisPool = new JedisPool(new JedisPoolConfig(), redisIp, redisPort, timeout, password);
         this.localId = UUID.randomUUID().toString();
         this.redisChannelName = redisChannelName;
-        startSub();
+        startSubscription();
     }
 
     public RedisWatcherEx(JedisPoolConfig config, String redisIp, int redisPort, String redisChannelName, int timeout, String password) {
         this.jedisPool = new JedisPool(config, redisIp, redisPort, timeout, password);
         this.localId = UUID.randomUUID().toString();
         this.redisChannelName = redisChannelName;
-        startSub();
+        startSubscription();
     }
 
     public RedisWatcherEx(String redisIp, int redisPort, String redisChannelName) {
@@ -41,12 +42,11 @@ public class RedisWatcherEx implements WatcherEx {
     @Override
     public void setUpdateCallback(Runnable runnable) {
         this.updateCallback = runnable;
-        subThread.setUpdateCallback(runnable);
     }
 
     @Override
     public void setUpdateCallback(Consumer<String> consumer) {
-        subThread.setUpdateCallback(consumer);
+
     }
 
     @Override
@@ -58,11 +58,36 @@ public class RedisWatcherEx implements WatcherEx {
         }
     }
 
-    private void startSub() {
-        subThread = new SubThread(jedisPool, redisChannelName, updateCallback);
-        subThread.start();
+    /**
+     * Starts the subscription to the Redis channel for receiving updates.
+     * The subscription runs in a separate thread from a thread pool.
+     * When a new message is received on the channel, the updateCallback is executed.
+     */
+    private void startSubscription() {
+        Thread subscriptionThread = new Thread(() -> {
+            try (Jedis jedis = jedisPool.getResource()) {
+                JedisPubSub subscriber = new JedisPubSub() {
+                    @Override
+                    public void onMessage(String channel, String message) {
+                        if (updateCallback != null) {
+                            updateCallback.run();
+                        }
+                    }
+                };
+                while (true) {
+                    jedis.subscribe(subscriber, redisChannelName);
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        });
+        subscriptionThread.start();
     }
 
+    /**
+     * Logs the execution of a runnable by running it and catching any exceptions.
+     * If an exception occurs, it is printed to the standard error output.
+     */
     private void logRecord(Runnable runnable) {
         try {
             runnable.run();
@@ -72,9 +97,11 @@ public class RedisWatcherEx implements WatcherEx {
     }
 
     /**
-     * UpdateForAddPolicy calls the update callback of other instances to synchronize their policy.
-     * It is called after Enforcer.AddPolicy()
+     * updateForAddPolicy calls the update callback of other instances to synchronize their policy.
+     * It is called after a policy is added via Enforcer.addPolicy(), Enforcer.addNamedPolicy(),
+     * Enforcer.addGroupingPolicy() and Enforcer.addNamedGroupingPolicy().
      */
+
     @Override
     public void updateForAddPolicy(String sec, String ptype, String... params) {
         logRecord(() -> {
@@ -90,8 +117,9 @@ public class RedisWatcherEx implements WatcherEx {
     }
 
     /**
-     * pdateForRemovePolicy calls the update callback of other instances to synchronize their policy.
-     * It is called after Enforcer.RemovePolicy()
+     * updateForRemovePolicy calls the update callback of other instances to synchronize their policy.
+     * It is called after a policy is removed by Enforcer.removePolicy(), Enforcer.removeNamedPolicy(),
+     * Enforcer.removeGroupingPolicy() and Enforcer.removeNamedGroupingPolicy().
      */
     @Override
     public void updateForRemovePolicy(String sec, String ptype, String... params) {
@@ -117,8 +145,9 @@ public class RedisWatcherEx implements WatcherEx {
     }
 
     /**
-     * UpdateForRemoveFilteredPolicy calls the update callback of other instances to synchronize their policy.
-     * It is called after Enforcer.RemoveFilteredNamedGroupingPolicy()
+     * updateForRemoveFilteredPolicy calls the update callback of other instances to synchronize their policy.
+     * It is called after Enforcer.RemoveFilteredPolicy(), Enforcer.RemoveFilteredNamedPolicy(),
+     * Enforcer.RemoveFilteredGroupingPolicy() and Enforcer.RemoveFilteredNamedGroupingPolicy().
      */
     @Override
     public void updateForRemoveFilteredPolicy(String sec, String ptype, int fieldIndex, String... fieldValues) {
@@ -144,8 +173,8 @@ public class RedisWatcherEx implements WatcherEx {
     }
 
     /**
-     * UpdateForSavePolicy calls the update callback of other instances to synchronize their policy.
-     * It is called after Enforcer.RemoveFilteredNamedGroupingPolicy()
+     * updateForSavePolicy calls the update callback of other instances to synchronize their policy.
+     * It is called after Enforcer.savePolicy()
      */
     @Override
     public void updateForSavePolicy(Model model) {
@@ -164,8 +193,9 @@ public class RedisWatcherEx implements WatcherEx {
     }
 
     /**
-     * UpdateForAddPolicies calls the update callback of other instances to synchronize their policies in batch.
-     * It is called after Enforcer.AddPolicies()
+     * updateForAddPolicies calls the update callback of other instances to synchronize their policy.
+     * It is called after Enforcer.addPolicies(), Enforcer.addNamedPolicies(),
+     * Enforcer.addGroupingPolicies() and Enforcer.addNamedGroupingPolicies().
      */
     @Override
     public void updateForAddPolicies(String sec, String ptype, List<List<String>> rules) {
@@ -182,8 +212,9 @@ public class RedisWatcherEx implements WatcherEx {
     }
 
     /**
-     * UpdateForRemovePolicies calls the update callback of other instances to synchronize their policies in batch.
-     * It is called after Enforcer.RemovePolicies()
+     * updateForRemovePolicies calls the update callback of other instances to synchronize their policy.
+     * It is called after Enforcer.removePolicies(), Enforcer.removeNamedPolicies(),
+     * Enforcer.removeGroupingPolicies() and Enforcer.removeNamedGroupingPolicies().
      */
     @Override
     public void updateForRemovePolicies(String sec, String ptype, List<List<String>> rules) {
@@ -207,43 +238,20 @@ public class RedisWatcherEx implements WatcherEx {
         msg.setNewRules(rules);
         return msg;
     }
+
     /**
-     * UpdateForUpdatePolicy calls the update callback of other instances to synchronize their policy.
+     * updateForUpdatePolicy calls the update callback of other instances to synchronize their policy.
      * It is called after Enforcer.UpdatePolicy()
      */
-    public void updateForUpdatePolicy(String sec, String ptype, String[] oldRule, String[] newRule) {
+    @Override
+    public void updateForUpdatePolicy(List<String> oldRules, List<String> newRules) {
         logRecord(() -> {
             try (Jedis jedis = jedisPool.getResource()) {
                 Msg msg = new Msg();
                 msg.setMethod(UpdateType.UpdateForUpdatePolicy);
                 msg.setId(localId);
-                msg.setSec(sec);
-                msg.setPtype(ptype);
-                msg.setOldRule(oldRule);
-                msg.setNewRule(newRule);
-
-                String dataStr = getBinaryMsg(msg);
-                jedis.publish(redisChannelName, dataStr);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        });
-    }
-
-    /**
-     * UpdateForUpdatePolicies calls the update callback of other instances to synchronize their policy.
-     * It is called after Enforcer.UpdatePolicies()
-     */
-    public void updateForUpdatePolicies(String sec, String ptype, List<List<String>> oldRules, List<List<String>> newRules) {
-        logRecord(() -> {
-            try (Jedis jedis = jedisPool.getResource()) {
-                Msg msg = new Msg();
-                msg.setMethod(UpdateType.UpdateForUpdatePolicies);
-                msg.setId(localId);
-                msg.setSec(sec);
-                msg.setPtype(ptype);
-                msg.setOldRules(oldRules);
-                msg.setNewRules(newRules);
+                msg.setOldRule(oldRules.toArray(new String[oldRules.size()]));
+                msg.setNewRule(newRules.toArray(new String[newRules.size()]));
 
                 String dataStr = getBinaryMsg(msg);
                 jedis.publish(redisChannelName, dataStr);
@@ -261,5 +269,4 @@ public class RedisWatcherEx implements WatcherEx {
         String dataStr = new String(data, StandardCharsets.UTF_8);
         return dataStr;
     }
-
 }

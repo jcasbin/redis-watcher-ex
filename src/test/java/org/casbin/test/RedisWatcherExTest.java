@@ -16,7 +16,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static org.awaitility.Durations.ONE_MINUTE;
+import static org.awaitility.Durations.TEN_SECONDS;
 
 
 public class RedisWatcherExTest {
@@ -42,24 +42,22 @@ public class RedisWatcherExTest {
         AtomicReference<String> message = new AtomicReference<>(null);
         watcher.setUpdateCallback((msg) -> {
             message.set(msg);
-            System.out.println("test method : " + msg);
         });
         watcher.update();
 
-        Awaitility.await().atMost(ONE_MINUTE).until(() -> message.get() != null);
-        Assert.assertNotNull(message.get());
+        Awaitility.await().atMost(TEN_SECONDS).until(() -> message.get() != null);
+        System.out.println("test method : " + message.get());
     }
     @Test
     public void testUpdateForAddPolicy() throws InterruptedException {
         AtomicReference<String> message = new AtomicReference<>(null);
         watcher.setUpdateCallback((msg)-> {
             message.set(msg);
-            System.out.println("test method : " + msg);
         });
         watcher.updateForAddPolicy("alice", "data1", "read");
 
-        Awaitility.await().atMost(ONE_MINUTE).until(() -> message.get() != null);
-        Assert.assertNotNull(message.get());
+        Awaitility.await().atMost(TEN_SECONDS).until(() -> message.get() != null);
+        System.out.println("test method : " + message.get());
 
     }
 
@@ -68,12 +66,11 @@ public class RedisWatcherExTest {
         AtomicReference<String> message = new AtomicReference<>(null);
         watcher.setUpdateCallback((msg) -> {
             message.set(msg);
-            System.out.println("test method : " + msg);
         });
         watcher.updateForRemovePolicy("alice", "data1", "read");
 
-        Awaitility.await().atMost(ONE_MINUTE).until(() -> message.get() != null);
-        Assert.assertNotNull(message.get());
+        Awaitility.await().atMost(TEN_SECONDS).until(() -> message.get() != null);
+        System.out.println("test method : " + message.get());
 
     }
 
@@ -82,11 +79,11 @@ public class RedisWatcherExTest {
         AtomicReference<String> message = new AtomicReference<>(null);
         watcher.setUpdateCallback((msg) -> {
             message.set(msg);
-            System.out.println("test method : " + msg);
         });
         watcher.updateForRemoveFilteredPolicy("alice", "data1", 1,"read");
-        Awaitility.await().atMost(ONE_MINUTE).until(() -> message.get() != null);
-        Assert.assertNotNull(message.get());
+
+        Awaitility.await().atMost(TEN_SECONDS).until(() -> message.get() != null);
+        System.out.println("test method : " + message.get());
 
     }
 
@@ -95,11 +92,10 @@ public class RedisWatcherExTest {
         AtomicReference<String> message = new AtomicReference<>(null);
         watcher.setUpdateCallback((msg) -> {
             message.set(msg);
-            System.out.println("test method : " + msg);
         });
         watcher.updateForSavePolicy(new Model());
-        Awaitility.await().atMost(ONE_MINUTE).until(() -> message.get() != null);
-        Assert.assertNotNull(message.get());
+        Awaitility.await().atMost(TEN_SECONDS).until(() -> message.get() != null);
+        System.out.println("test method : " + message.get());
 
     }
 
@@ -108,7 +104,6 @@ public class RedisWatcherExTest {
         AtomicReference<String> message = new AtomicReference<>(null);
         watcher.setUpdateCallback((msg) -> {
             message.set(msg);
-            System.out.println("test method : " + msg);
         });
         List<List<String>> rules = Arrays.asList(
                 Arrays.asList("jack", "data4", "read"),
@@ -117,8 +112,8 @@ public class RedisWatcherExTest {
                 Arrays.asList("ham", "data4", "write")
         );
         watcher.updateForAddPolicies("alice", "data1", rules);
-        Awaitility.await().atMost(ONE_MINUTE).until(() -> message.get() != null);
-        Assert.assertNotNull(message.get());
+        Awaitility.await().atMost(TEN_SECONDS).until(() -> message.get() != null);
+        System.out.println("test method : " + message.get());
     }
 
     @Test
@@ -126,7 +121,6 @@ public class RedisWatcherExTest {
         AtomicReference<String> message = new AtomicReference<>(null);
         watcher.setUpdateCallback((msg) -> {
             message.set(msg);
-            System.out.println("test method : " + msg);
         });
         List<List<String>> rules = Arrays.asList(
                 Arrays.asList("jack", "data4", "read"),
@@ -135,7 +129,8 @@ public class RedisWatcherExTest {
                 Arrays.asList("ham", "data4", "write")
         );
         watcher.updateForRemovePolicies("alice", "data1", rules);
-        Awaitility.await().atMost(ONE_MINUTE).until(() -> message.get() != null);
-        Assert.assertNotNull(message.get());
+
+        Awaitility.await().atMost(TEN_SECONDS).until(() -> message.get() != null);
+        System.out.println("test method : " + message.get());
     }
 }

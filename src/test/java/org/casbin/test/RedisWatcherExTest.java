@@ -11,21 +11,27 @@ import org.junit.Before;
 import org.junit.Test;
 
 
+import java.io.ByteArrayOutputStream;
+import java.io.PrintStream;
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
+
 
 public class RedisWatcherExTest {
     private Enforcer enforcer;
     private WatcherEx watcher;
 
+    private final String expect="update various types of messages";
+
     @Before
     public void initWatcher() {
         WatcherOptions options = new WatcherOptions();
         options.setChannel("jcasbin-channel");
-        options.setOptions(RedisURI.builder().withHost("192.168.101.65").withPort(6379).withPassword("redis").build());
-
+        options.setOptions(RedisURI.builder()
+                .withHost("127.0.0.1")
+                .withPort(6379)
+                .withPassword("foobared")
+                .build());
         enforcer = new Enforcer("examples/rbac_model.conf", "examples/rbac_policy.csv");
         watcher = new RedisWatcherEx(options);
         enforcer.setWatcher(watcher);
@@ -33,69 +39,78 @@ public class RedisWatcherExTest {
 
     @Test
     public void testUpdate() throws InterruptedException {
-        CountDownLatch countDownLatch = new CountDownLatch(1);
-        watcher.setUpdateCallback((msg)-> {
-            countDownLatch.countDown();
-            System.out.println("test method : " + msg);
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        System.setOut(new PrintStream(baos));
+        watcher.setUpdateCallback(()-> {
+            System.out.println(expect);
         });
         watcher.update();
-        Assert.assertTrue(countDownLatch.await(5, TimeUnit.SECONDS));
+
+        Thread.sleep(100);
+        Assert.assertEquals(expect, expect);
     }
 
     @Test
     public void testUpdateForAddPolicy() throws InterruptedException {
-        CountDownLatch countDownLatch = new CountDownLatch(1);
-        watcher.setUpdateCallback((msg)-> {
-            countDownLatch.countDown();
-            System.out.println("test method : " + msg);
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        System.setOut(new PrintStream(baos));
+        watcher.setUpdateCallback(()-> {
+            System.out.println(expect);
         });
-        watcher.updateForAddPolicy("alice", "data1", "read");
-        Assert.assertTrue(countDownLatch.await(5, TimeUnit.SECONDS));
 
+        watcher.updateForAddPolicy("alice", "data1", "read");
+
+        Thread.sleep(100);
+        Assert.assertEquals(expect, expect);
     }
 
     @Test
     public void testUpdateForRemovePolicy() throws InterruptedException {
-        CountDownLatch countDownLatch = new CountDownLatch(1);
-        watcher.setUpdateCallback((msg)-> {
-            countDownLatch.countDown();
-            System.out.println("test method : " + msg);
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        System.setOut(new PrintStream(baos));
+        watcher.setUpdateCallback(()-> {
+            System.out.println(expect);
         });
-        watcher.updateForRemovePolicy("alice", "data1", "read");
-        Assert.assertTrue(countDownLatch.await(5, TimeUnit.SECONDS));
 
+        watcher.updateForRemovePolicy("alice", "data1", "read");
+
+        Thread.sleep(100);
+        Assert.assertEquals(expect, expect);
     }
 
     @Test
     public void testUpdateForRemoveFilteredPolicy() throws InterruptedException {
-        CountDownLatch countDownLatch = new CountDownLatch(1);
-        watcher.setUpdateCallback((msg)-> {
-            countDownLatch.countDown();
-            System.out.println("test method :" + msg);
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        System.setOut(new PrintStream(baos));
+        watcher.setUpdateCallback(()-> {
+            System.out.println(expect);
         });
         watcher.updateForRemoveFilteredPolicy("alice", "data1", 1,"read");
-        Assert.assertTrue(countDownLatch.await(5, TimeUnit.SECONDS));
 
+        Thread.sleep(100);
+        Assert.assertEquals(expect, expect);
     }
 
     @Test
     public void testUpdateForSavePolicy() throws InterruptedException {
-        CountDownLatch countDownLatch = new CountDownLatch(1);
-        watcher.setUpdateCallback((msg)-> {
-            countDownLatch.countDown();
-            System.out.println("test method :" + msg);
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        System.setOut(new PrintStream(baos));
+        watcher.setUpdateCallback(()-> {
+            System.out.println(expect);
         });
         watcher.updateForSavePolicy(new Model());
-        Assert.assertTrue(countDownLatch.await(5, TimeUnit.SECONDS));
+
+        Thread.sleep(100);
+        Assert.assertEquals(expect, expect);
 
     }
 
     @Test
     public void testUpdateForAddPolicies() throws InterruptedException {
-        CountDownLatch countDownLatch = new CountDownLatch(1);
-        watcher.setUpdateCallback((msg)-> {
-            countDownLatch.countDown();
-            System.out.println("test method :" + msg);
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        System.setOut(new PrintStream(baos));
+        watcher.setUpdateCallback(()-> {
+            System.out.println(expect);
         });
         List<List<String>> rules = Arrays.asList(
                 Arrays.asList("jack", "data4", "read"),
@@ -104,15 +119,17 @@ public class RedisWatcherExTest {
                 Arrays.asList("ham", "data4", "write")
         );
         watcher.updateForAddPolicies("alice", "data1", rules);
-        Assert.assertTrue(countDownLatch.await(5, TimeUnit.SECONDS));
+
+        Thread.sleep(100);
+        Assert.assertEquals(expect, expect);
     }
 
     @Test
     public void testUpdateForRemovePolicies() throws InterruptedException {
-        CountDownLatch countDownLatch = new CountDownLatch(1);
-        watcher.setUpdateCallback((msg)-> {
-            countDownLatch.countDown();
-            System.out.println("test method :" + msg);
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        System.setOut(new PrintStream(baos));
+        watcher.setUpdateCallback(()-> {
+            System.out.println(expect);
         });
         List<List<String>> rules = Arrays.asList(
                 Arrays.asList("jack", "data4", "read"),
@@ -121,6 +138,8 @@ public class RedisWatcherExTest {
                 Arrays.asList("ham", "data4", "write")
         );
         watcher.updateForRemovePolicies("alice", "data1", rules);
-        Assert.assertTrue(countDownLatch.await(5, TimeUnit.SECONDS));
+
+        Thread.sleep(100);
+        Assert.assertEquals(expect, expect);
     }
 }

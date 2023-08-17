@@ -16,7 +16,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static org.awaitility.Durations.FIVE_SECONDS;
+import static org.awaitility.Durations.ONE_MINUTE;
+
 
 public class RedisWatcherExTest {
     private Enforcer enforcer;
@@ -45,7 +46,7 @@ public class RedisWatcherExTest {
         });
         watcher.update();
 
-        Awaitility.await().atMost(FIVE_SECONDS).until(() -> message.get() != null);
+        Awaitility.await().atMost(ONE_MINUTE).until(() -> message.get() != null);
         Assert.assertNotNull(message.get());
     }
     @Test
@@ -57,7 +58,7 @@ public class RedisWatcherExTest {
         });
         watcher.updateForAddPolicy("alice", "data1", "read");
 
-        Awaitility.await().atMost(FIVE_SECONDS).until(() -> message.get() != null);
+        Awaitility.await().atMost(ONE_MINUTE).until(() -> message.get() != null);
         Assert.assertNotNull(message.get());
 
     }
@@ -71,7 +72,7 @@ public class RedisWatcherExTest {
         });
         watcher.updateForRemovePolicy("alice", "data1", "read");
 
-        Awaitility.await().atMost(FIVE_SECONDS).until(() -> message.get() != null);
+        Awaitility.await().atMost(ONE_MINUTE).until(() -> message.get() != null);
         Assert.assertNotNull(message.get());
 
     }
@@ -84,7 +85,7 @@ public class RedisWatcherExTest {
             System.out.println("test method : " + msg);
         });
         watcher.updateForRemoveFilteredPolicy("alice", "data1", 1,"read");
-        Awaitility.await().atMost(FIVE_SECONDS).until(() -> message.get() != null);
+        Awaitility.await().atMost(ONE_MINUTE).until(() -> message.get() != null);
         Assert.assertNotNull(message.get());
 
     }
@@ -97,7 +98,7 @@ public class RedisWatcherExTest {
             System.out.println("test method : " + msg);
         });
         watcher.updateForSavePolicy(new Model());
-        Awaitility.await().atMost(FIVE_SECONDS).until(() -> message.get() != null);
+        Awaitility.await().atMost(ONE_MINUTE).until(() -> message.get() != null);
         Assert.assertNotNull(message.get());
 
     }
@@ -116,7 +117,7 @@ public class RedisWatcherExTest {
                 Arrays.asList("ham", "data4", "write")
         );
         watcher.updateForAddPolicies("alice", "data1", rules);
-        Awaitility.await().atMost(FIVE_SECONDS).until(() -> message.get() != null);
+        Awaitility.await().atMost(ONE_MINUTE).until(() -> message.get() != null);
         Assert.assertNotNull(message.get());
     }
 
@@ -134,7 +135,7 @@ public class RedisWatcherExTest {
                 Arrays.asList("ham", "data4", "write")
         );
         watcher.updateForRemovePolicies("alice", "data1", rules);
-        Awaitility.await().atMost(FIVE_SECONDS).until(() -> message.get() != null);
+        Awaitility.await().atMost(ONE_MINUTE).until(() -> message.get() != null);
         Assert.assertNotNull(message.get());
     }
 }

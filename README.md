@@ -1,5 +1,19 @@
 Redis WatcherEx
+====
+
+[![build](https://github.com/jcasbin/redis-watcher-ex/actions/workflows/ci.yml/badge.svg)](https://github.com/jcasbin/redis-waycher-ex/actions/workflows/ci.yml)
+[![Maven Central](https://img.shields.io/maven-central/v/org.casbin/jcasbin-redis-watcher-ex.svg)](https://central.sonatype.com/artifact/org.casbin/jcasbin-redis-watcher-ex)
+
 ---
+## Installation
+For Maven:
+```xml
+<dependency>
+    <groupId>org.casbin</groupId>
+    <artifactId>jcasbin-redis-watcher-ex</artifactId>
+    <version>1.1.0</version>
+</dependency>
+```
 ## Simple Example
 
 ```java
